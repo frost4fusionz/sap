@@ -13,8 +13,8 @@ from threading import Thread
 
 loop = asyncio.get_event_loop()
 
-TOKEN = '7275048595:AAEUmiY1AYw7bWyy2EvaETdpfTMdinhhpNg'
-user_id =("1066744659, 7383077317, 8159441634, 6265999727, 482756202, 6240348610, 1253267234, 1583238165, 1202212810, 6140583954, 1432056322") # Add your admin IDs here as a set
+TOKEN = '7151529676:AAED9GJZKQy3kVZCy6xUbYqAlKRggfZ2Uto'
+user_id =("7383077317") # Add your admin IDs here as a set
 MONGO_URI = 'mongodb+srv://sharp:sharp@sharpx.x82gx.mongodb.net/?retryWrites=true&w=majority&appName=SharpX'
 FORWARD_CHANNEL_ID = -1002026175994
 CHANNEL_ID = -1002026175994
