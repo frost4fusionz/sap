@@ -191,7 +191,7 @@ def create_handlers(bot):
             else:
                 response = "Usage: /attack <target> <port> <time>."
         else:
-            response = "🤡 Access expired or unauthorized : buy @spoliator_personal & visit our telegram channel : https://t.me/Linuxcode_channel."
+            response = "🤡 Access expired or unauthorized : contact to Bot Admin @X9HYDRA, Ritik,@Anjalisingh05072006,@Vaibhav264."
         bot.reply_to(message, response)
 
     @bot.message_handler(commands=['mylogs'])
