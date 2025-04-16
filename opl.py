@@ -55,7 +55,7 @@ def create_handlers(bot):
                 "Thank you for your attention and support."
             ))
         else:
-            bot.reply_to(message, "You are not authorized to use this bot : buy @spoliator_personal & visit our telegram channel : https://t.me/Linuxcode_channel.")
+            bot.reply_to(message, "You are not authorized to use this bot : free & visit our telegram channel : 99-OFF-ZONE.")
 
     @bot.message_handler(commands=['add'])
     def add_user(message):
