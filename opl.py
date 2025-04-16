@@ -8,7 +8,7 @@ import platform
 import socket
 
 bot_tokens = [
-    '8149841430:AAFKMlKyseA5xbwDULOjtaDSlAjbkHc5xOA',
+    '7151529676:AAED9GJZKQy3kVZCy6xUbYqAlKRggfZ2Uto',
 ]
 
 admin_ids = [7383077317]
