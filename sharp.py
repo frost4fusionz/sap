@@ -8,7 +8,7 @@ import platform
 import socket
 
 bot_tokens = ['6913030366:AAEtMr3xpYaioIzEk7iYT_Mio7YgXrEjluE']
-admin_ids = ["7383077317"]
+admin_ids = ["7383077317, 6240348610, 6188354219, 1066744659, 8159441634"]
 
 allowed_user_ids = []
 
@@ -54,7 +54,7 @@ def create_handlers(bot):
                 "Thank you for your attention and support."
             ))
         else:
-            bot.reply_to(message, "You are not authorized to use this bot : buy @spoliator_personal & visit our telegram channel : https://t.me/Linuxcode_channel.")
+            bot.reply_to(message, "You are not authorized to use this bot :contact to Bot Admin @X9HYDRA, Ritik,@Anjalisingh05072006,@Vaibhav264")
 
     @bot.message_handler(commands=['add'])
     def add_user(message):
