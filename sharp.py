@@ -8,7 +8,7 @@ import platform
 import socket
 
 bot_tokens = ['7151529676:AAED9GJZKQy3kVZCy6xUbYqAlKRggfZ2Uto']
-admin_ids = ["7383077317"]
+admin_ids = ["7383077317", "6240348610", "6188354219", "1066744659", "8159441634"]
 
 allowed_user_ids = []
 
